@@ -6,7 +6,7 @@ class Snake:
     def __init__(self, screen, clock):
         self.head_pos = [300, 300]
         self.body = [[300, 300]]
-        self.x_move = 10
+        self.x_move = 0
         self.y_move = 0
         self.length = 1
         self.screen = screen
@@ -25,9 +25,9 @@ class Snake:
 
     def crush_check(self):
         if self.body.count(self.head_pos) >= 2:
-            game_over(self.screen, self.clock, self.length)
-        if 0 > self.head_pos[0] or self.head_pos[0] > 720 or 0 > self.head_pos[1] \
-                or self.head_pos[1] > 460:
+            game_over(self.screen, self.clock, self.length, self.head_pos)
+        if 0 >= self.head_pos[0] or self.head_pos[0] >= 720 or 0 >= self.head_pos[1] \
+                or self.head_pos[1] >= 460:
             game_over(self.screen, self.clock, self.length)
 
 
