@@ -1,5 +1,6 @@
 import pygame
 from random import randrange
+import time
 
 
 class Snake:
@@ -25,10 +26,12 @@ class Snake:
 
     def crush_check(self):
         if self.body.count(self.head_pos) >= 2:
-            game_over(self.screen, self.clock, self.length, self.head_pos)
-        if 0 >= self.head_pos[0] or self.head_pos[0] >= 720 or 0 >= self.head_pos[1] \
+            return True
+        if 0 > self.head_pos[0] or self.head_pos[0] >= 720 or 0 > self.head_pos[1] \
                 or self.head_pos[1] >= 460:
-            game_over(self.screen, self.clock, self.length)
+            print(self.head_pos[0])
+            return True
+        return False
 
 
 class Food:
@@ -43,9 +46,11 @@ class Food:
         self.x, self.y = randrange(60, 720, 10), randrange(60, 460, 10)
 
 
-def game_over(screen, clock, score):
+def game_over(screen, clock, score, sound):
+    sound.play()
+    time.sleep(1)
     screen.fill('white')
-    text = ['GAME OVER', f'Итоговый счет равен: {score - 1}', 'Нажмите R чтобы начать заново',
+    text = ['GAME OVER', f'Итоговый счет равен: {score}', 'Нажмите R чтобы начать заново',
             'Нажмите ESC чтобы выйти']
     font = pygame.font.Font(None, 50)
     text_coord = 50
@@ -77,6 +82,13 @@ def new_game():
     pygame.display.set_caption('Змейка')
     size = 720, 460
     screen = pygame.display.set_mode(size)
+    pygame.mixer.music.load('data/music.mp3')
+    pygame.mixer.music.set_volume(0.1)
+    pygame.mixer.music.play(-1)
+    sound1 = pygame.mixer.Sound('data/crush_sound.mp3')
+    sound1.set_volume(0.5)
+    sound2 = pygame.mixer.Sound('data/pick_sound.mp3')
+    sound2.set_volume(0.5)
     running = True
     score = 0
     snake = Snake(screen, clock)
@@ -101,10 +113,12 @@ def new_game():
                     snake.y_move = 0
                     snake.x_move = -10
         if snake.head_pos[0] == food.x and snake.head_pos[1] == food.y:
+            sound2.play()
             score += 1
             food.update()
             snake.body_groove()
-        snake.crush_check()
+        if snake.crush_check():
+            game_over(screen, clock, score, sound1)
         screen.fill('black')
         score_text = font.render(f'Счет: {score}', True, pygame.Color('white'))
         screen.blit(score_text, (0, 0))
