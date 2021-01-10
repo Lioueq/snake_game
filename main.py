@@ -1,6 +1,7 @@
 import pygame
 from random import randrange
 import time
+import pygame_gui
 
 
 class Snake:
@@ -29,7 +30,6 @@ class Snake:
             return True
         if 0 > self.head_pos[0] or self.head_pos[0] >= 720 or 0 > self.head_pos[1] \
                 or self.head_pos[1] >= 460:
-            print(self.head_pos[0])
             return True
         return False
 
@@ -68,7 +68,7 @@ def game_over(screen, clock, score, sound):
                 exit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_r:
-                    return new_game()
+                    new_game()
                 if event.key == pygame.K_ESCAPE:
                     exit()
         pygame.display.flip()
@@ -103,13 +103,13 @@ def new_game():
                 if event.key == pygame.K_UP and snake.y_move != 10:
                     snake.y_move = -10
                     snake.x_move = 0
-                if event.key == pygame.K_DOWN and snake.y_move != -10:
+                elif event.key == pygame.K_DOWN and snake.y_move != -10:
                     snake.y_move = 10
                     snake.x_move = 0
-                if event.key == pygame.K_RIGHT and snake.x_move != -10:
+                elif event.key == pygame.K_RIGHT and snake.x_move != -10:
                     snake.y_move = 0
                     snake.x_move = 10
-                if event.key == pygame.K_LEFT and snake.x_move != 10:
+                elif event.key == pygame.K_LEFT and snake.x_move != 10:
                     snake.y_move = 0
                     snake.x_move = -10
         if snake.head_pos[0] == food.x and snake.head_pos[1] == food.y:
@@ -128,5 +128,36 @@ def new_game():
         pygame.display.flip()
 
 
+def main_window():
+    pygame.init()
+    clock = pygame.time.Clock()
+    pygame.display.set_caption('Змейка')
+    size = 720, 460
+    main_window_screen = pygame.display.set_mode(size)
+    manager = pygame_gui.UIManager(size)
+    play_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(300, 100, 100, 40),
+                                               text='Начать игру',
+                                               manager=manager)
+    exit_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(300, 300, 100, 40),
+                                               text='Выйти',
+                                               manager=manager)
+    run = True
+    while run:
+        time_delta = clock.tick(25) / 1000.0
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                exit()
+            if event.type == pygame.USEREVENT:
+                if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
+                    if event.ui_element == play_button:
+                        new_game()
+                    if event.ui_element == exit_button:
+                        exit()
+            manager.process_events(event)
+        manager.update(time_delta)
+        manager.draw_ui(main_window_screen)
+        pygame.display.flip()
+
+
 if __name__ == '__main__':
-    new_game()
+    main_window()
