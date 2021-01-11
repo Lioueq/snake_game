@@ -3,10 +3,11 @@ from random import randrange
 import time
 import pygame_gui
 
-THEMES = {'default': ['default', 'red', 'blue', 'black']}
+THEMES = {'default': ['default', 'red', 'blue', 'black', 'white'],
+          'anime': ['anime', 'red', 'brown', 'pink', 'white']}
 music_play = True
 difficulty = 'Легкий'
-theme = ['default', 'red', 'blue', 'black']
+theme = ['default', 'red', 'blue', 'black', 'white']
 
 
 class Snake:
@@ -25,7 +26,7 @@ class Snake:
         self.body.append([self.body[-1][0] + self.x_move, self.body[-1][1] + self.y_move])
         self.body = self.body[-self.length:]
         for i in self.body:
-            pygame.draw.rect(self.screen, 'red', (i[0], i[1], 10, 10))
+            pygame.draw.rect(self.screen, theme[1], (i[0], i[1], 10, 10))
 
     def body_groove(self):
         self.length += 1
@@ -45,7 +46,7 @@ class Food:
         self.screen = screen
 
     def render(self):
-        pygame.draw.rect(self.screen, 'blue', (self.x, self.y, 10, 10))
+        pygame.draw.rect(self.screen, theme[2], (self.x, self.y, 10, 10))
 
     def update(self):
         self.x, self.y = randrange(60, 720, 10), randrange(60, 460, 10)
@@ -60,30 +61,41 @@ def game_over(screen, clock, score, sound):
         pygame.mixer.music.load('data/music2.mp3')
         pygame.mixer.music.set_volume(0.1)
         pygame.mixer.music.play(-1)
-    screen.fill('white')
-    text = ['GAME OVER', f'Итоговый счет равен: {score}', 'Нажмите R чтобы начать заново',
-            'Нажмите ESC чтобы выйти в главное', 'меню']
+    screen.fill(theme[3])
+    text = ['GAME OVER', f'Итоговый счет равен: {score}']
     font = pygame.font.Font(None, 50)
     text_coord = 50
     for line in text:
-        string_rendered = font.render(line, True, pygame.Color('black'))
+        string_rendered = font.render(line, True, pygame.Color(theme[4]))
         intro_rect = string_rendered.get_rect()
         text_coord += 10
         intro_rect.top = text_coord
-        intro_rect.x = 10
+        intro_rect.x = 175
         text_coord += intro_rect.height
         screen.blit(string_rendered, intro_rect)
-    while True:
+    manager = pygame_gui.UIManager((720, 460))
+    play_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(250, 200, 180, 40),
+                                               text='Начать заново',
+                                               manager=manager)
+    exit_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(250, 300, 180, 40),
+                                               text='Выйти в главное меню',
+                                               manager=manager)
+    run = True
+    while run:
+        time_delta = clock.tick(25) / 1000.0
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 exit()
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_r:
-                    new_game()
-                if event.key == pygame.K_ESCAPE:
-                    main_window()
+            if event.type == pygame.USEREVENT:
+                if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
+                    if event.ui_element == play_button:
+                        new_game()
+                    if event.ui_element == exit_button:
+                        main_window()
+            manager.process_events(event)
+        manager.update(time_delta)
+        manager.draw_ui(screen)
         pygame.display.flip()
-        clock.tick(25)
 
 
 def new_game():
@@ -137,8 +149,8 @@ def new_game():
             snake.body_groove()
         if snake.crush_check():
             game_over(screen, clock, score, sound1)
-        screen.fill('black')
-        score_text = font.render(f'Счет: {score}', True, pygame.Color('white'))
+        screen.fill(theme[3])
+        score_text = font.render(f'Счет: {score}', True, pygame.Color(theme[4]))
         screen.blit(score_text, (0, 0))
         snake.render()
         food.render()
@@ -152,6 +164,7 @@ def main_window(var=0):
     pygame.display.set_caption('Змейка')
     size = 720, 460
     main_window_screen = pygame.display.set_mode(size)
+    main_window_screen.fill(theme[3])
     if music_play and var != 1:
         pygame.mixer.music.stop()
         pygame.mixer.music.load('data/music3.mp3')
@@ -206,7 +219,7 @@ def settings_window():
                                                                         starting_option=difficulty,
                                                                         relative_rect=pygame.Rect(275, 100, 150, 40),
                                                                         manager=s_manager)
-    s_theme = pygame_gui.elements.ui_drop_down_menu.UIDropDownMenu(options_list=['default'],
+    s_theme = pygame_gui.elements.ui_drop_down_menu.UIDropDownMenu(options_list=['default', 'anime'],
                                                                    starting_option=theme[0],
                                                                    relative_rect=pygame.Rect(275, 300, 150, 40),
                                                                    manager=s_manager)
@@ -235,7 +248,7 @@ def settings_window():
                     if event.ui_element == s_theme:
                         theme = THEMES[event.text]
             s_manager.process_events(event)
-        settings_screen.fill('black')
+        settings_screen.fill(theme[3])
         s_manager.update(time_delta)
         s_manager.draw_ui(settings_screen)
         pygame.display.flip()
