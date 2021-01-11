@@ -3,7 +3,10 @@ from random import randrange
 import time
 import pygame_gui
 
+THEMES = {'default': ['default', 'red', 'blue', 'black']}
 music_play = True
+difficulty = 'Легкий'
+theme = ['default', 'red', 'blue', 'black']
 
 
 class Snake:
@@ -59,7 +62,7 @@ def game_over(screen, clock, score, sound):
         pygame.mixer.music.play(-1)
     screen.fill('white')
     text = ['GAME OVER', f'Итоговый счет равен: {score}', 'Нажмите R чтобы начать заново',
-            'Нажмите T чтобы выйти в главное меню', 'Нажмите ESC чтобы выйти']
+            'Нажмите ESC чтобы выйти в главное', 'меню']
     font = pygame.font.Font(None, 50)
     text_coord = 50
     for line in text:
@@ -77,17 +80,20 @@ def game_over(screen, clock, score, sound):
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_r:
                     new_game()
-                if event.key == pygame.K_t:
-                    main_window()
                 if event.key == pygame.K_ESCAPE:
-                    exit()
+                    main_window()
         pygame.display.flip()
         clock.tick(25)
 
 
 def new_game():
     pygame.init()
-    fps = 25
+    if difficulty == 'Легкий':
+        fps = 15
+    elif difficulty == 'Средний':
+        fps = 30
+    else:
+        fps = 60
     clock = pygame.time.Clock()
     pygame.display.set_caption('Змейка')
     size = 720, 460
@@ -99,7 +105,7 @@ def new_game():
         pygame.mixer.music.play(-1)
     sound1 = pygame.mixer.Sound('data/crush_sound.mp3')
     sound1.set_volume(0.5)
-    sound2 = pygame.mixer.Sound('data/pick_sound.mp3')
+    sound2 = pygame.mixer.Sound('data/pick_up_sound.mp3')
     sound2.set_volume(0.5)
     running = True
     score = 0
@@ -182,20 +188,28 @@ def main_window(var=0):
 
 
 def settings_window():
-    global music_play
-    var = 0
+    global music_play, difficulty, theme
+    var = 1
     pygame.init()
     clock = pygame.time.Clock()
     pygame.display.set_caption('Настройки')
     size = 720, 460
     settings_screen = pygame.display.set_mode(size)
     s_manager = pygame_gui.UIManager(size)
-    music_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(275, 100, 150, 40),
+    music_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(275, 200, 150, 40),
                                                 text='Вкл/выкл музыку',
                                                 manager=s_manager)
     exit_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(250, 400, 200, 40),
                                                text='Выйти в главное меню',
                                                manager=s_manager)
+    s_difficulty = pygame_gui.elements.ui_drop_down_menu.UIDropDownMenu(options_list=['Легкий', 'Средний', 'Сложный'],
+                                                                        starting_option=difficulty,
+                                                                        relative_rect=pygame.Rect(275, 100, 150, 40),
+                                                                        manager=s_manager)
+    s_theme = pygame_gui.elements.ui_drop_down_menu.UIDropDownMenu(options_list=['default'],
+                                                                   starting_option=theme[0],
+                                                                   relative_rect=pygame.Rect(275, 300, 150, 40),
+                                                                   manager=s_manager)
     run = True
     while run:
         time_delta = clock.tick(60) / 1000.0
@@ -208,13 +222,20 @@ def settings_window():
                         main_window(var)
                     if event.ui_element == music_button:
                         if music_play:
+                            var = 0
                             music_play = False
                             pygame.mixer.music.stop()
                         else:
                             var = 1
                             music_play = True
                             pygame.mixer.music.play()
+                if event.user_type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
+                    if event.ui_element == s_difficulty:
+                        difficulty = event.text
+                    if event.ui_element == s_theme:
+                        theme = THEMES[event.text]
             s_manager.process_events(event)
+        settings_screen.fill('black')
         s_manager.update(time_delta)
         s_manager.draw_ui(settings_screen)
         pygame.display.flip()
