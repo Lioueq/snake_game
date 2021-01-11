@@ -47,11 +47,15 @@ class Food:
 
 
 def game_over(screen, clock, score, sound):
+    pygame.mixer.music.stop()
+    pygame.mixer.music.load('data/music2.mp3')
+    pygame.mixer.music.set_volume(0.1)
+    pygame.mixer.music.play(-1)
     sound.play()
     time.sleep(1)
     screen.fill('white')
     text = ['GAME OVER', f'Итоговый счет равен: {score}', 'Нажмите R чтобы начать заново',
-            'Нажмите ESC чтобы выйти']
+            'Нажмите T чтобы выйти в главное меню', 'Нажмите ESC чтобы выйти']
     font = pygame.font.Font(None, 50)
     text_coord = 50
     for line in text:
@@ -69,6 +73,8 @@ def game_over(screen, clock, score, sound):
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_r:
                     new_game()
+                if event.key == pygame.K_t:
+                    main_window()
                 if event.key == pygame.K_ESCAPE:
                     exit()
         pygame.display.flip()
@@ -82,6 +88,7 @@ def new_game():
     pygame.display.set_caption('Змейка')
     size = 720, 460
     screen = pygame.display.set_mode(size)
+    pygame.mixer.music.stop()
     pygame.mixer.music.load('data/music.mp3')
     pygame.mixer.music.set_volume(0.1)
     pygame.mixer.music.play(-1)
@@ -134,10 +141,17 @@ def main_window():
     pygame.display.set_caption('Змейка')
     size = 720, 460
     main_window_screen = pygame.display.set_mode(size)
+    pygame.mixer.music.stop()
+    pygame.mixer.music.load('data/music3.mp3')
+    pygame.mixer.music.set_volume(0.1)
+    pygame.mixer.music.play(-1)
     manager = pygame_gui.UIManager(size)
     play_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(300, 100, 100, 40),
                                                text='Начать игру',
                                                manager=manager)
+    settings_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(300, 200, 100, 40),
+                                                   text='Настройки',
+                                                   manager=manager)
     exit_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(300, 300, 100, 40),
                                                text='Выйти',
                                                manager=manager)
@@ -151,11 +165,44 @@ def main_window():
                 if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
                     if event.ui_element == play_button:
                         new_game()
+                    if event.ui_element == settings_button:
+                        settings_window()
                     if event.ui_element == exit_button:
                         exit()
             manager.process_events(event)
         manager.update(time_delta)
         manager.draw_ui(main_window_screen)
+        pygame.display.flip()
+
+
+def settings_window():
+    pygame.init()
+    clock = pygame.time.Clock()
+    pygame.display.set_caption('Настройки')
+    size = 720, 460
+    settings_screen = pygame.display.set_mode(size)
+    s_manager = pygame_gui.UIManager(size)
+    music_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(275, 100, 150, 40),
+                                                text='Вкл/выкл музыку',
+                                                manager=s_manager)
+    exit_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(250, 400, 200, 40),
+                                               text='Выйти в главное меню',
+                                               manager=s_manager)
+    run = True
+    while run:
+        time_delta = clock.tick(60) / 1000.0
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                exit()
+            if event.type == pygame.USEREVENT:
+                if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
+                    if event.ui_element == exit_button:
+                        main_window()
+                    if event.ui_element == music_button:
+                        pass
+            s_manager.process_events(event)
+        s_manager.update(time_delta)
+        s_manager.draw_ui(settings_screen)
         pygame.display.flip()
 
 
