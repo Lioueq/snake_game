@@ -3,6 +3,8 @@ from random import randrange
 import time
 import pygame_gui
 
+music_play = True
+
 
 class Snake:
     def __init__(self, screen, clock):
@@ -48,11 +50,13 @@ class Food:
 
 def game_over(screen, clock, score, sound):
     pygame.mixer.music.stop()
-    pygame.mixer.music.load('data/music2.mp3')
-    pygame.mixer.music.set_volume(0.1)
-    pygame.mixer.music.play(-1)
     sound.play()
     time.sleep(1)
+    if music_play:
+        pygame.mixer.music.stop()
+        pygame.mixer.music.load('data/music2.mp3')
+        pygame.mixer.music.set_volume(0.1)
+        pygame.mixer.music.play(-1)
     screen.fill('white')
     text = ['GAME OVER', f'Итоговый счет равен: {score}', 'Нажмите R чтобы начать заново',
             'Нажмите T чтобы выйти в главное меню', 'Нажмите ESC чтобы выйти']
@@ -88,10 +92,11 @@ def new_game():
     pygame.display.set_caption('Змейка')
     size = 720, 460
     screen = pygame.display.set_mode(size)
-    pygame.mixer.music.stop()
-    pygame.mixer.music.load('data/music.mp3')
-    pygame.mixer.music.set_volume(0.1)
-    pygame.mixer.music.play(-1)
+    if music_play:
+        pygame.mixer.music.stop()
+        pygame.mixer.music.load('data/music.mp3')
+        pygame.mixer.music.set_volume(0.1)
+        pygame.mixer.music.play(-1)
     sound1 = pygame.mixer.Sound('data/crush_sound.mp3')
     sound1.set_volume(0.5)
     sound2 = pygame.mixer.Sound('data/pick_sound.mp3')
@@ -135,16 +140,17 @@ def new_game():
         pygame.display.flip()
 
 
-def main_window():
+def main_window(var=0):
     pygame.init()
     clock = pygame.time.Clock()
     pygame.display.set_caption('Змейка')
     size = 720, 460
     main_window_screen = pygame.display.set_mode(size)
-    pygame.mixer.music.stop()
-    pygame.mixer.music.load('data/music3.mp3')
-    pygame.mixer.music.set_volume(0.1)
-    pygame.mixer.music.play(-1)
+    if music_play and var != 1:
+        pygame.mixer.music.stop()
+        pygame.mixer.music.load('data/music3.mp3')
+        pygame.mixer.music.set_volume(0.1)
+        pygame.mixer.music.play(-1)
     manager = pygame_gui.UIManager(size)
     play_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(300, 100, 100, 40),
                                                text='Начать игру',
@@ -176,6 +182,8 @@ def main_window():
 
 
 def settings_window():
+    global music_play
+    var = 0
     pygame.init()
     clock = pygame.time.Clock()
     pygame.display.set_caption('Настройки')
@@ -197,9 +205,15 @@ def settings_window():
             if event.type == pygame.USEREVENT:
                 if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
                     if event.ui_element == exit_button:
-                        main_window()
+                        main_window(var)
                     if event.ui_element == music_button:
-                        pass
+                        if music_play:
+                            music_play = False
+                            pygame.mixer.music.stop()
+                        else:
+                            var = 1
+                            music_play = True
+                            pygame.mixer.music.play()
             s_manager.process_events(event)
         s_manager.update(time_delta)
         s_manager.draw_ui(settings_screen)
