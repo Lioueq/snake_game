@@ -58,7 +58,7 @@ class Food:  # класс еды
         self.x, self.y = randrange(60, 720, 10), randrange(60, 460, 10)
 
 
-def rgb_choice():
+def rgb_choice():  # функция возвращения цвета
     color = pygame.Color(choice(RGB), choice(RGB), choice(RGB))
     return color
 
@@ -74,7 +74,7 @@ def game_over(screen, clock, score, sound):  # смерть игрока
     # проверка для проигрывания фоновой музыки
     if music_play:
         pygame.mixer.music.stop()
-        pygame.mixer.music.load('data/music2.mp3')
+        pygame.mixer.music.load('data/d_music2.mp3')
         pygame.mixer.music.set_volume(0.1)
         pygame.mixer.music.play(-1)
     screen.fill(theme[3])
@@ -139,7 +139,7 @@ def new_game():  # игровой процесс
     # проверка для проигрывания фоновой музыки
     if music_play:
         pygame.mixer.music.stop()
-        pygame.mixer.music.load('data/music.mp3')
+        pygame.mixer.music.load('data/d_music.mp3')
         pygame.mixer.music.set_volume(0.1)
         pygame.mixer.music.play(-1)
     sound1 = pygame.mixer.Sound('data/crush_sound.mp3')
@@ -226,7 +226,7 @@ def main_window(var=0):  # главное меню
     # проверка для проигрывания фоновой музыки
     if music_play and var != 1:
         pygame.mixer.music.stop()
-        pygame.mixer.music.load('data/music3.mp3')
+        pygame.mixer.music.load('data/d_music3.mp3')
         pygame.mixer.music.set_volume(0.1)
         pygame.mixer.music.play(-1)
     # инициализация графического интерфейса
@@ -316,7 +316,11 @@ def settings_window():  # меню настроек
                     if event.ui_element == s_difficulty:  # смена сложности
                         difficulty = event.text
                     if event.ui_element == s_theme:  # смена темы
-                        theme = themes[event.text]
+                        if event.text == 'random':
+                            themes[event.text] = ['random', rgb_choice(), rgb_choice(), rgb_choice(), 'white']
+                            theme = themes[event.text]
+                        else:
+                            theme = themes[event.text]
             s_manager.process_events(event)
         # рисование сцены
         settings_screen.fill(theme[3])
@@ -326,6 +330,7 @@ def settings_window():  # меню настроек
 
 
 def shop_window():
+    # инициализация
     global coins
     pygame.init()
     clock = pygame.time.Clock()
@@ -384,7 +389,7 @@ def shop_window():
         shop_manager.update(time_delta)
         shop_manager.draw_ui(shop_screen)
         # отображение текста
-        string_rendered = font2.render(f'Стоймость: {theme_cost}', True, pygame.Color(theme[4]))
+        string_rendered = font2.render(f'Стоимость: {theme_cost}', True, pygame.Color(theme[4]))
         shop_screen.blit(string_rendered, pygame.Rect(150, 110, 0, 0))
         shop_screen.blit(string_rendered, pygame.Rect(150, 210, 0, 0))
         shop_screen.blit(string_rendered, pygame.Rect(150, 310, 0, 0))
