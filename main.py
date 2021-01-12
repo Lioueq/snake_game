@@ -1,15 +1,19 @@
 import pygame
-from random import randrange
+from random import randrange, choice
 import time
 import pygame_gui
 
-# необходимые переменные и константа в которой хранятся темы
-THEMES = {'default': ['default', 'red', 'blue', 'black', 'white'],
-          'anime': ['anime', 'red', 'brown', 'pink', 'white'],
-          'ocean': ['ocean', 'orange', 'green', 'blue', 'white']}
+# необходимые переменные и константы
+
+RGB = [i for i in range(255)]
+themes = {'default': ['default', 'red', 'blue', 'black', 'white']}
 music_play = True
 difficulty = 'Легкий'
-theme = THEMES['default']
+theme = themes['default']
+coins = int(open('data/coins.txt').readlines()[0])
+f = open('data/data.txt', 'a+')
+f.seek(0)
+available_themes = f.readlines()
 
 
 class Snake:  # класс змеи
@@ -54,11 +58,19 @@ class Food:  # класс еды
         self.x, self.y = randrange(60, 720, 10), randrange(60, 460, 10)
 
 
+def rgb_choice():
+    color = pygame.Color(choice(RGB), choice(RGB), choice(RGB))
+    return color
+
+
 def game_over(screen, clock, score, sound):  # смерть игрока
+    global coins
     # инициализация
     pygame.mixer.music.stop()
     sound.play()
     time.sleep(1)
+    coins += score
+    open('data/coins.txt', 'w').write(str(coins))
     # проверка для проигрывания фоновой музыки
     if music_play:
         pygame.mixer.music.stop()
@@ -67,7 +79,7 @@ def game_over(screen, clock, score, sound):  # смерть игрока
         pygame.mixer.music.play(-1)
     screen.fill(theme[3])
     text = ['GAME OVER', f'Итоговый счет равен: {score}']
-    font = pygame.font.Font(None, 50)
+    font = pygame.font.SysFont('arial', 36)
     text_coord = 50
     # отображение текста
     for line in text:
@@ -113,9 +125,12 @@ def new_game():  # игровой процесс
     # уровень сложности
     if difficulty == 'Легкий':
         fps = 15
+        point_per_food = 1
     elif difficulty == 'Средний':
         fps = 30
+        point_per_food = 2
     else:
+        point_per_food = 3
         fps = 60
     clock = pygame.time.Clock()
     pygame.display.set_caption('Змейка')
@@ -136,7 +151,7 @@ def new_game():  # игровой процесс
     snake = Snake(screen, clock)
     food = Food(screen)
     food.render()
-    font = pygame.font.Font(None, 50)
+    font = pygame.font.SysFont('arial', 36)
     # основной цикл
     while running:
         for event in pygame.event.get():
@@ -175,7 +190,7 @@ def new_game():  # игровой процесс
         # Проверка на попадание в позицию еды
         if snake.head_pos[0] == food.x and snake.head_pos[1] == food.y:
             sound2.play()
-            score += 1
+            score += point_per_food
             food.update()
             snake.body_groove()
         # рисование кадра
@@ -199,6 +214,15 @@ def main_window(var=0):  # главное меню
     size = 720, 460
     main_window_screen = pygame.display.set_mode(size)
     main_window_screen.fill(theme[3])
+    # восстановление купленных тем
+    if available_themes:
+        for i in available_themes:
+            if i == 'anime\n':
+                themes['anime'] = ['anime', 'red', 'brown', 'pink', 'white']
+            elif i == 'ocean\n':
+                themes['ocean'] = ['ocean', 'orange', 'green', 'blue', 'white']
+            elif i == 'random\n':
+                themes['random'] = ['random', rgb_choice(), rgb_choice(), rgb_choice(), 'white']
     # проверка для проигрывания фоновой музыки
     if music_play and var != 1:
         pygame.mixer.music.stop()
@@ -207,13 +231,16 @@ def main_window(var=0):  # главное меню
         pygame.mixer.music.play(-1)
     # инициализация графического интерфейса
     manager = pygame_gui.UIManager(size)
-    play_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(300, 100, 100, 40),
+    play_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(300, 50, 100, 40),
                                                text='Начать игру',
                                                manager=manager)
-    settings_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(300, 200, 100, 40),
+    shop_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(300, 150, 100, 40),
+                                               text='Магазин',
+                                               manager=manager)
+    settings_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(300, 250, 100, 40),
                                                    text='Настройки',
                                                    manager=manager)
-    exit_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(300, 300, 100, 40),
+    exit_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(300, 350, 100, 40),
                                                text='Выйти',
                                                manager=manager)
     run = True
@@ -221,14 +248,18 @@ def main_window(var=0):  # главное меню
         time_delta = clock.tick(25) / 1000.0
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                f.close()
                 exit()
             if event.type == pygame.USEREVENT:
                 if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
                     if event.ui_element == play_button:  # кнопка начала игры
                         new_game()
+                    if event.ui_element == shop_button:  # кнопка магазина
+                        shop_window()
                     if event.ui_element == settings_button:  # кнопка настроек
                         settings_window()
                     if event.ui_element == exit_button:  # кнопка выхода
+                        f.close()
                         exit()
             manager.process_events(event)
         # рисование сцены
@@ -258,7 +289,7 @@ def settings_window():  # меню настроек
                                                                         starting_option=difficulty,
                                                                         relative_rect=pygame.Rect(275, 100, 150, 40),
                                                                         manager=s_manager)
-    s_theme = pygame_gui.elements.ui_drop_down_menu.UIDropDownMenu(options_list=['default', 'anime', 'ocean'],
+    s_theme = pygame_gui.elements.ui_drop_down_menu.UIDropDownMenu(options_list=list(themes.keys()),
                                                                    starting_option=theme[0],
                                                                    relative_rect=pygame.Rect(275, 300, 150, 40),
                                                                    manager=s_manager)
@@ -285,12 +316,80 @@ def settings_window():  # меню настроек
                     if event.ui_element == s_difficulty:  # смена сложности
                         difficulty = event.text
                     if event.ui_element == s_theme:  # смена темы
-                        theme = THEMES[event.text]
+                        theme = themes[event.text]
             s_manager.process_events(event)
         # рисование сцены
         settings_screen.fill(theme[3])
         s_manager.update(time_delta)
         s_manager.draw_ui(settings_screen)
+        pygame.display.flip()
+
+
+def shop_window():
+    global coins
+    pygame.init()
+    clock = pygame.time.Clock()
+    pygame.display.set_caption('Магазин')
+    size = 720, 460
+    shop_screen = pygame.display.set_mode(size)
+    theme_cost = 10
+    font = pygame.font.SysFont('arial', 36)
+    font2 = pygame.font.SysFont('arial', 18)
+    # инициализация графического интерфейса
+    shop_manager = pygame_gui.UIManager(size)
+    anime_theme_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(275, 100, 125, 40),
+                                                      text='anime тема',
+                                                      manager=shop_manager)
+    ocean_theme_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(275, 200, 125, 40),
+                                                      text='ocean тема',
+                                                      manager=shop_manager)
+    random_theme_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(275, 300, 125, 40),
+                                                       text='random тема',
+                                                       manager=shop_manager)
+    exit_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(250, 400, 180, 40),
+                                               text='Выйти в главное меню',
+                                               manager=shop_manager)
+    run = True
+    while run:  # основной цикл
+        time_delta = clock.tick(60) / 1000.0
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                exit()
+            if event.type == pygame.USEREVENT:
+                if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
+                    # покупка темы
+                    if event.ui_element == anime_theme_button:
+                        if coins >= theme_cost and 'anime\n' not in available_themes and 'anime' not in themes:
+                            coins -= theme_cost
+                            open('data/coins.txt', 'w').write(str(coins))
+                            themes['anime'] = ['anime', 'red', 'brown', 'pink', 'white']
+                            f.write('anime\n')
+                    if event.ui_element == ocean_theme_button:
+                        if coins >= theme_cost and 'ocean\n' not in available_themes and 'ocean' not in themes:
+                            coins -= theme_cost
+                            open('data/coins.txt', 'w').write(str(coins))
+                            themes['ocean'] = ['ocean', 'orange', 'green', 'blue', 'white']
+                            f.write('ocean\n')
+                    if event.ui_element == random_theme_button:
+                        if coins >= theme_cost and 'random\n' not in available_themes and 'random' not in themes:
+                            coins -= theme_cost
+                            open('data/coins.txt', 'w').write(str(coins))
+                            themes['random'] = ['random', rgb_choice(), rgb_choice(), rgb_choice(), 'white']
+                            f.write('random\n')
+                    if event.ui_element == exit_button:
+                        main_window(1)
+            shop_manager.process_events(event)
+        # рисование сцены
+        shop_screen.fill(theme[3])
+        shop_manager.update(time_delta)
+        shop_manager.draw_ui(shop_screen)
+        # отображение текста
+        string_rendered = font2.render(f'Стоймость: {theme_cost}', True, pygame.Color(theme[4]))
+        shop_screen.blit(string_rendered, pygame.Rect(150, 110, 0, 0))
+        shop_screen.blit(string_rendered, pygame.Rect(150, 210, 0, 0))
+        shop_screen.blit(string_rendered, pygame.Rect(150, 310, 0, 0))
+        string_rendered = font.render(f'Количество поинтов: {coins}', True, pygame.Color(theme[4]))
+        shop_screen.blit(string_rendered, pygame.Rect(0, 0, 50, 50))
         pygame.display.flip()
 
 
