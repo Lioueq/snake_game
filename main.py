@@ -220,7 +220,7 @@ def main_window(var=0):  # главное меню
             if i == 'anime\n':
                 themes['anime'] = ['anime', 'red', 'brown', 'pink', 'white']
             elif i == 'ocean\n':
-                themes['ocean'] = ['ocean', 'orange', 'green', 'blue', 'white']
+                themes['ocean'] = ['ocean', pygame.Color(237, 145, 33), 'green', 'blue', 'white']
             elif i == 'random\n':
                 themes['random'] = ['random', rgb_choice(), rgb_choice(), rgb_choice(), 'white']
     # проверка для проигрывания фоновой музыки
@@ -373,7 +373,7 @@ def shop_window():
                         if coins >= theme_cost and 'ocean\n' not in available_themes and 'ocean' not in themes:
                             coins -= theme_cost
                             open('data/coins.txt', 'w').write(str(coins))
-                            themes['ocean'] = ['ocean', 'orange', 'green', 'blue', 'white']
+                            themes['ocean'] = ['ocean', pygame.Color(237, 145, 33), 'green', 'blue', 'white']
                             f.write('ocean\n')
                     if event.ui_element == random_theme_button:
                         if coins >= theme_cost and 'random\n' not in available_themes and 'random' not in themes:
